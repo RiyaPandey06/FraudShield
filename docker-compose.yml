@@ -1,0 +1,142 @@
+# One command:  docker compose up --build
+# Optional local LLM explanations:  docker compose --profile llm up --build   (then: docker compose exec ollama ollama pull llama3.2:3b)
+x-app-env: &app-env
+  DATA_DIR: /app/data
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  LABEL_DELAY_HOURS: ${LABEL_DELAY_HOURS:-4}
+  TRAIN_ROWS: ${TRAIN_ROWS:-40000}
+  FRAUD_THRESHOLD: ${FRAUD_THRESHOLD:-}          # empty = use the cost-tuned threshold stored with the model
+  OLLAMA_URL: ${OLLAMA_URL:-}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+  AUTO_RETRAIN: ${AUTO_RETRAIN:-true}
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.18
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+    ports:
+      - "19092:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --api-urls localhost:9644 --exit-when-healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mlflow:
+    image: fraudshield:local
+    pull_policy: never
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////app/data/mlflow.db --default-artifact-root /app/data/mlartifacts
+    volumes:
+      - fraudshield-data:/app/data
+    ports:
+      - "5000:5000"
+    depends_on:
+      api-image:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=2)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Builds the shared image once; the other services reuse it.
+  api-image:
+    build: .
+    image: fraudshield:local
+    pull_policy: build
+    command: python -c "print('image ready')"
+
+  init:
+    image: fraudshield:local
+    pull_policy: never
+    command: python -m app.bootstrap
+    environment: *app-env
+    volumes:
+      - fraudshield-data:/app/data
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  api:
+    image: fraudshield:local
+    pull_policy: never
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment: *app-env
+    volumes:
+      - fraudshield-data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  worker:
+    image: fraudshield:local
+    pull_policy: never
+    command: python -m app.worker
+    environment:
+      <<: *app-env
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    volumes:
+      - fraudshield-data:/app/data
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      redpanda:
+        condition: service_healthy
+
+  producer:
+    image: fraudshield:local
+    pull_policy: never
+    command: python -m app.producer --speed 0.08
+    environment:
+      <<: *app-env
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    volumes:
+      - fraudshield-data:/app/data
+    depends_on:
+      worker:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/fraudshield.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  ollama:
+    image: ollama/ollama:0.3.12
+    profiles: ["llm"]
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+
+volumes:
+  fraudshield-data:
+  ollama-models:

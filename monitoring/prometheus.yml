@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: fraudshield-api
+    static_configs: [{targets: ["api:8000"]}]
+  - job_name: fraudshield-worker
+    static_configs: [{targets: ["worker:9100"]}]

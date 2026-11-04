@@ -1,0 +1,106 @@
+{
+  "rows": 60000,
+  "test_rows": 9000,
+  "test_frauds": 343,
+  "seeds": 3,
+  "n_boot": 500,
+  "backend": "sklearn_hgb",
+  "models": {
+    "gbm_tabular": {
+      "pr_auc": 0.9102,
+      "recall_at_90_precision": 0.7308,
+      "precision_at_1pct": 0.9926,
+      "precision_at_threshold": 0.6214,
+      "recall_at_threshold": 0.9524,
+      "cost_at_threshold": 12153.3333,
+      "flag_nothing_cost": 171500.0,
+      "pr_auc_std": 0.001
+    },
+    "gbm_tabular_graph": {
+      "pr_auc": 0.9391,
+      "recall_at_90_precision": 0.8076,
+      "precision_at_1pct": 0.9889,
+      "precision_at_threshold": 0.5584,
+      "recall_at_threshold": 0.9883,
+      "cost_at_threshold": 7366.6667,
+      "flag_nothing_cost": 171500.0,
+      "pr_auc_std": 0.0017
+    },
+    "gbm_tabular_messagepassing": {
+      "pr_auc": 0.9181,
+      "recall_at_90_precision": 0.723,
+      "precision_at_1pct": 0.9963,
+      "precision_at_threshold": 0.581,
+      "recall_at_threshold": 0.967,
+      "cost_at_threshold": 10546.6667,
+      "flag_nothing_cost": 171500.0,
+      "pr_auc_std": 0.0048
+    },
+    "gnn_messagepassing_mlp": {
+      "pr_auc": 0.8678,
+      "recall_at_90_precision": 0.6142,
+      "precision_at_1pct": 1.0,
+      "precision_at_threshold": 0.4428,
+      "recall_at_threshold": 0.9689,
+      "cost_at_threshold": 13706.6667,
+      "flag_nothing_cost": 171500.0,
+      "pr_auc_std": 0.0082
+    }
+  },
+  "bootstrap": {
+    "gnn_vs_gbm_tabular": {
+      "pr_auc": {
+        "a": 0.9116,
+        "a_lo": 0.8878,
+        "a_hi": 0.9336,
+        "b": 0.8769,
+        "b_lo": 0.8483,
+        "b_hi": 0.9012,
+        "diff": -0.0364,
+        "diff_lo": -0.0603,
+        "diff_hi": -0.0105,
+        "p_b_not_better": 0.996
+      },
+      "recall_at_90_precision": {
+        "a": 0.7434,
+        "a_lo": 0.6606,
+        "a_hi": 0.8016,
+        "b": 0.6181,
+        "b_lo": 0.5562,
+        "b_hi": 0.6877,
+        "diff": -0.1183,
+        "diff_lo": -0.1873,
+        "diff_hi": -0.0502,
+        "p_b_not_better": 1.0
+      }
+    },
+    "gnn_vs_gbm_tabular_graph": {
+      "pr_auc": {
+        "a": 0.9406,
+        "a_lo": 0.9205,
+        "a_hi": 0.9585,
+        "b": 0.8769,
+        "b_lo": 0.8483,
+        "b_hi": 0.9012,
+        "diff": -0.065,
+        "diff_lo": -0.0889,
+        "diff_hi": -0.0399,
+        "p_b_not_better": 1.0
+      },
+      "recall_at_90_precision": {
+        "a": 0.8192,
+        "a_lo": 0.751,
+        "a_hi": 0.8688,
+        "b": 0.6181,
+        "b_lo": 0.5562,
+        "b_hi": 0.6877,
+        "diff": -0.1972,
+        "diff_lo": -0.2617,
+        "diff_hi": -0.1253,
+        "p_b_not_better": 1.0
+      }
+    }
+  },
+  "message_passing": "2 layers, mean aggregation over accounts sharing a device, <=25 neighbours, label-free",
+  "seconds": 121.6
+}

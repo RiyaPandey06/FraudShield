@@ -1,0 +1,15 @@
+.env
+.venv/
+.venv-exp/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+data/
+data_backup/
+results_backup/
+mlruns/
+*.db
+*.joblib
+*.jsonl
+*.egg-info/
+.vercel/

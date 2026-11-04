@@ -1,0 +1,36 @@
+{
+  "mode": "in-process",
+  "requests": 3000,
+  "throughput_tps": 596.8,
+  "end_to_end": {
+    "p50_ms": 0.848,
+    "p95_ms": 1.38,
+    "p99_ms": 2.207,
+    "mean_ms": 1.66
+  },
+  "features": {
+    "p50_ms": 0.137,
+    "p95_ms": 0.229,
+    "p99_ms": 0.322,
+    "mean_ms": 0.147
+  },
+  "model": {
+    "p50_ms": 0.613,
+    "p95_ms": 0.98,
+    "p99_ms": 1.127,
+    "mean_ms": 0.659
+  },
+  "database": {
+    "p50_ms": 0.092,
+    "p95_ms": 0.175,
+    "p99_ms": 0.466,
+    "mean_ms": 0.854
+  },
+  "backend": "sklearn_hgb",
+  "explainer": "occlusion",
+  "hardware": {
+    "cpu_count": 1,
+    "python": "3.12.3",
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39"
+  }
+}
